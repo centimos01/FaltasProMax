@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FaltasProMax · Calculadora de faltas FP Andalucía</title>
+<meta name="description" content="Calculadora de faltas para Formación Profesional en Andalucía: el 80% de asistencia mínimo del artículo 2.4 de la Orden de 18 de septiembre de 2025.">
+<style>
+/* ==================================================================
+   FaltasProMax — monocromo, alto contraste, sin dependencias.
+   ================================================================== */
+
+:root {
+  --tinta:        #111111;
+  --papel:        #ffffff;
+  --linea:        #d6d6d6;
+  --linea-fuerte: #111111;
+  --tenue:        #f5f5f5;
+  --gris:         #6b6b6b;
+  --gris-claro:   #767676;  /* 4,54:1 sobre blanco: el mínimo AA */
+
+  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono", Menlo,
+          Consolas, monospace;
+
+  --e1: 4px;  --e2: 8px;  --e3: 12px; --e4: 16px;
+  --e5: 24px; --e6: 32px; --e7: 48px;
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--papel);
+  color: var(--tinta);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.55;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+
+.envoltorio {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 var(--e5) var(--e7);
+}
+
+/* ---------- Tipografía ---------- */
+
+h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -0.02em; }
+
+.seccion-titulo {
+  display: flex;
+  align-items: baseline;
+  gap: var(--e3);
+  padding-bottom: var(--e2);
+  margin-bottom: var(--e4);
+  border-bottom: 1px solid var(--linea-fuerte);
+}
+.seccion-titulo .num {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--gris-claro);
+  letter-spacing: 0;
+}
+.seccion-titulo h2 { font-size: 15px; text-transform: uppercase; letter-spacing: 0.08em; }
+
+.tenue { color: var(--gris); }
+.mono  { font-family: var(--mono); }
+
+/* ---------- Cabecera ---------- */
+
+.cabecera {
+  padding: var(--e6) 0 var(--e5);
+  border-bottom: 2px solid var(--tinta);
+  margin-bottom: var(--e6);
+}
+.marca {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  margin-bottom: var(--e3);
+}
+.marca .glifo {
+  width: 34px; height: 34px;
+  border: 2px solid var(--tinta);
+  display: grid; place-items: center;
+  font-family: var(--mono);
+  font-size: 15px; font-weight: 700;
+}
+.cabecera h1 { font-size: 27px; }
+.cabecera .lema { margin: var(--e2) 0 0; color: var(--gris); font-size: 15px; max-width: 62ch; }
+.cabecera .lema strong { color: var(--tinta); font-weight: 600; }
+
+/* ---------- Etiquetas ---------- */
+
+.etiqueta {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 3px 7px;
+  border: 1px solid var(--linea-fuerte);
+  white-space: nowrap;
+}
+.etiqueta.legal { background: var(--tinta); color: var(--papel); font-weight: 600; }
+.etiqueta.aviso  { background: var(--tinta); color: var(--papel); }
+.etiqueta.suave  { background: transparent; border-color: var(--gris); color: var(--gris); }
+
+/* ---------- Paneles ---------- */
+
+.panel {
+  border: 1px solid var(--linea);
+  padding: var(--e4);
+  margin-bottom: var(--e4);
+  background: var(--papel);
+}
+.panel > .nota {
+  margin: var(--e3) 0 0;
+  padding-top: var(--e3);
+  border-top: 1px solid var(--linea);
+  font-size: 13.5px;
+  color: var(--gris);
+}
+
+.bloque { margin-bottom: var(--e6); }
+
+/* ---------- Ajustes ---------- */
+
+.ajustes { display: flex; flex-wrap: wrap; gap: var(--e5); align-items: flex-start; }
+
+.campo { display: flex; flex-direction: column; gap: 6px; }
+.campo > label {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gris);
+}
+.campo input[type="number"] {
+  width: 92px;
+  font-family: var(--mono);
+  font-size: 16px;
+  padding: 7px 9px;
+  border: 1px solid var(--linea-fuerte);
+  background: var(--papel);
+  color: var(--tinta);
+}
+.campo input[type="number"]:focus-visible,
+.entrada:focus-visible {
+  outline: 2px solid var(--tinta);
+  outline-offset: 1px;
+}
+
+.interruptor {
+  display: flex; align-items: flex-start; gap: 10px;
+  cursor: pointer; max-width: 42ch;
+}
+.interruptor input { margin: 3px 0 0; width: 16px; height: 16px; accent-color: #111; flex: none; }
+.interruptor .txt strong { display: block; font-size: 13.5px; font-weight: 600; }
+.interruptor .txt span   { display: block; font-size: 12.5px; color: var(--gris); }
+
+/* ---------- Selector de modo ---------- */
+
+.modos {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border: 1px solid var(--linea-fuerte);
+}
+
+.modo {
+  appearance: none;
+  font: inherit;
+  text-align: left;
+  background: var(--papel);
+  color: var(--tinta);
+  border: 0;
+  border-right: 1px solid var(--linea);
+  padding: var(--e4);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  transition: background 90ms linear, color 90ms linear;
+}
+.modo:last-child { border-right: 0; }
+.modo:hover { background: var(--tenue); }
+.modo .cab { display: flex; align-items: center; gap: var(--e2); }
+.modo .letra {
+  font-family: var(--mono);
+  font-size: 12px; font-weight: 700;
+  width: 22px; height: 22px;
+  border: 1px solid currentColor;
+  display: grid; place-items: center;
+  flex: none;
+}
+.modo .tit { font-weight: 600; font-size: 14.5px; }
+.modo .res { font-size: 12.5px; color: var(--gris); line-height: 1.45; }
+
+.modo[aria-pressed="true"] { background: var(--tinta); color: var(--papel); }
+.modo[aria-pressed="true"] .res { color: #cfcfcf; }
+.modo[aria-pressed="true"]:hover { background: var(--tinta); }
+
+/* En la tarjeta oscura del modo seleccionado la insignia "legal" conserva el
+   relleno sólido y la discreta se queda en simple contorno. Así la distinción
+   entre el criterio legal y el resto no depende de qué modo esté elegido. */
+.modo[aria-pressed="true"] .etiqueta.legal {
+  background: var(--papel);
+  color: var(--tinta);
+  border-color: var(--papel);
+}
+.modo[aria-pressed="true"] .etiqueta.suave {
+  background: transparent;
+  color: var(--papel);
+  border-color: #7a7a7a;
+}
+
+.modo .legal-inline { margin-top: auto; align-self: flex-start; }
+.modo[aria-pressed="true"] .legal-inline { background: var(--papel); color: var(--tinta); }
+
+/* ---------- Tabla de módulos ---------- */
+
+.encabezado { display: flex; flex-wrap: wrap; gap: var(--e3); align-items: center; justify-content: space-between; }
+
+input.entrada {
+  font-family: var(--sans);
+  font-size: 14px;
+  padding: 6px 8px;
+  border: 1px solid var(--linea);
+  background: var(--papel);
+  color: var(--tinta);
+  width: 100%;
+  min-width: 0;
+}
+input.entrada:hover { border-color: var(--gris-claro); }
+input.entrada.num {
+  font-family: var(--mono);
+  text-align: right;
+  width: 82px;
+  flex: none;
+}
+input.entrada.num::-webkit-outer-spin-button,
+input.entrada.num::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input.entrada[type="number"] { -moz-appearance: textfield; }
+
+.tabla-envoltorio { overflow-x: auto; margin-top: var(--e4); }
+
+table.modulos {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 620px;
+  /* La tabla contiene los spans "visualmente-oculto" de la cabecera. Sin un
+     ancestro posicionado, esos absolutos escapan al viewport y ensanchan el
+     documento entero, provocando scroll horizontal en móvil. */
+  position: relative;
+}
+table.modulos th {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gris);
+  font-weight: 400;
+  text-align: left;
+  padding: 0 var(--e2) var(--e2);
+  border-bottom: 1px solid var(--linea-fuerte);
+  white-space: nowrap;
+}
+table.modulos th.num,
+table.modulos td.num { text-align: right; }
+table.modulos td {
+  padding: 7px var(--e2);
+  border-bottom: 1px solid var(--linea);
+  vertical-align: middle;
+}
+table.modulos td.acciones { width: 34px; padding-left: 0; }
+table.modulos tr:last-child td { border-bottom: 0; }
+
+.vacio {
+  padding: var(--e5) var(--e3);
+  text-align: center;
+  color: var(--gris);
+  border-bottom: 1px solid var(--linea);
+  font-size: 13.5px;
+}
+
+/* Visible sólo para lectores de pantalla (encabezado de columna "Quitar"). */
+.visualmente-oculto {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- Botones ---------- */
+
+button {
+  font: inherit;
+  cursor: pointer;
+  background: var(--papel);
+  color: var(--tinta);
+  border: 1px solid var(--linea-fuerte);
+  padding: 7px 13px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 90ms linear, color 90ms linear;
+}
+button:hover:not(:disabled) { background: var(--tinta); color: var(--papel); }
+button:focus-visible { outline: 2px solid var(--tinta); outline-offset: 2px; }
+button:disabled { opacity: 0.35; cursor: not-allowed; }
+
+button.fantasma { border-color: var(--linea); }
+button.fantasma:hover:not(:disabled) { background: var(--tenue); color: var(--tinta); border-color: var(--linea-fuerte); }
+
+button.icono {
+  border: 0; padding: 4px 6px; background: transparent;
+  color: var(--gris-claro); font-size: 16px; line-height: 1;
+}
+button.icono:hover { background: transparent; color: var(--tinta); }
+
+/* ---------- Tarjeta resultado (hero) ---------- */
+
+.hero {
+  background: var(--tinta);
+  color: var(--papel);
+  padding: var(--e5);
+  margin-bottom: var(--e4);
+}
+.hero .eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #a8a8a8;
+  display: block;
+  margin-bottom: var(--e3);
+}
+.hero .cifra {
+  font-family: var(--mono);
+  font-size: clamp(38px, 8vw, 62px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  display: block;
+  margin-bottom: var(--e2);
+}
+.hero .cifra .ud {
+  font-size: 0.32em;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: #c8c8c8;
+  margin-left: 0.3em;
+}
+.hero .leyenda { font-size: 14px; color: #d4d4d4; max-width: 66ch; }
+.hero .leyenda b { color: var(--papel); font-weight: 600; }
+
+.hero .sello {
+  margin-top: var(--e4);
+  padding-top: var(--e3);
+  border-top: 1px solid #3a3a3a;
+  font-size: 12px;
+  color: #a8a8a8;
+  display: flex; flex-wrap: wrap; gap: var(--e2) var(--e4);
+}
+.hero .sello .negativo { color: var(--papel); font-weight: 600; }
+
+/* ---------- Rejilla de datos ---------- */
+
+.rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(158px, 1fr));
+  border: 1px solid var(--linea-fuerte);
+}
+.rejilla > div {
+  padding: var(--e3) var(--e4);
+  border-right: 1px solid var(--linea);
+  border-bottom: 1px solid var(--linea);
+}
+.rejilla > div:last-child { border-right: 0; }
+.rejilla .k {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gris);
+  margin-bottom: 3px;
+}
+.rejilla .v { font-family: var(--mono); font-size: 19px; font-weight: 600; }
+.rejilla .v .ud { font-size: 0.62em; font-weight: 400; color: var(--gris); margin-left: 2px; }
+
+/* ---------- Barras por módulo ---------- */
+
+.tarjetas { display: grid; gap: var(--e2); }
+
+.tarjeta-modulo {
+  border: 1px solid var(--linea);
+  padding: var(--e3) var(--e4);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--e2) var(--e4);
+  align-items: center;
+}
+.tarjeta-modulo.perdida { border-color: var(--tinta); border-width: 2px; padding: calc(var(--e3) - 1px) calc(var(--e4) - 1px); }
+.tarjeta-modulo.limite  { border-color: var(--tinta); }
+
+.tarjeta-modulo .nombre {
+  font-weight: 600;
+  font-size: 14px;
+  display: flex; align-items: center; gap: var(--e2); flex-wrap: wrap;
+}
+.tarjeta-modulo .meta {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--gris);
+  margin-top: 2px;
+}
+.tarjeta-modulo .cifras { text-align: right; font-family: var(--mono); }
+.tarjeta-modulo .cifras .resto { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; }
+.tarjeta-modulo .cifras .de { font-size: 11px; color: var(--gris); }
+.tarjeta-modulo.perdida .cifras .resto { text-decoration: line-through; }
+
+.barra {
+  grid-column: 1 / -1;
+  height: 7px;
+  background: var(--tenue);
+  border: 1px solid var(--linea);
+  position: relative;
+  overflow: hidden;
+}
+.barra .relleno {
+  position: absolute; inset: 0 auto 0 0;
+  background: var(--tinta);
+}
+.barra .relleno.aviso  { background: var(--gris); }
+.barra .relleno.perdida {
+  background: transparent;
+  background-image: repeating-linear-gradient(45deg,
+    var(--tinta) 0 3px, var(--papel) 3px 6px);
+}
+
+/* ---------- Avisos ---------- */
+
+.aviso {
+  border: 1px solid var(--tinta);
+  border-left-width: 4px;
+  padding: var(--e3) var(--e4);
+  margin-bottom: var(--e3);
+  font-size: 13.5px;
+}
+.aviso strong { display: block; margin-bottom: 3px; font-size: 13px; letter-spacing: 0.02em; }
+.aviso.neutro { border-left-color: var(--gris-claro); }
+
+/* ---------- Referencias legales ---------- */
+
+.referencias { border-top: 1px solid var(--linea); padding-top: var(--e5); margin-top: var(--e7); }
+.referencias dl { margin: 0; display: grid; gap: var(--e4); }
+.referencias dt {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gris);
+  margin-bottom: 5px;
+}
+.referencias dd { margin: 0; font-size: 13.5px; max-width: 88ch; }
+.referencias a { color: var(--tinta); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+.referencias cite { font-style: italic; color: var(--gris); }
+
+.pie {
+  margin-top: var(--e6);
+  padding-top: var(--e4);
+  border-top: 1px solid var(--linea);
+  font-size: 12px;
+  color: var(--gris-claro);
+  display: flex; flex-wrap: wrap; gap: var(--e2) var(--e4); justify-content: space-between;
+}
+
+/* ---------- Adaptación ---------- */
+
+@media (max-width: 760px) {
+  .envoltorio { padding: 0 var(--e4) var(--e6); }
+  .modos { grid-template-columns: 1fr; }
+  .modo { border-right: 0; border-bottom: 1px solid var(--linea); }
+  .modo:last-child { border-bottom: 0; }
+  .rejilla > div { border-right: 0; }
+  .cabecera h1 { font-size: 23px; }
+  /* La tabla se desplaza dentro de su propio contenedor, no ensancha la página. */
+  table.modulos { min-width: 560px; }
+  input.entrada.num { width: 68px; }
+  .hero { padding: var(--e4); }
+}
+
+@media print {
+  body { font-size: 11pt; }
+  button, .ajustes, .icono { display: none !important; }
+  .hero { border: 2px solid #000; }
+  .envoltorio { max-width: none; padding: 0; }
+  .bloque { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+<div class="envoltorio">
+
+  <!-- ===================== CABECERA ===================== -->
+  <header class="cabecera">
+    <div class="marca">
+      <div class="glifo" aria-hidden="true">%</div>
+      <div>
+        <h1>FaltasProMax</h1>
+      </div>
+    </div>
+    <p class="lema">
+      ¿Cuántas faltas puedes acumular sin perder la <strong>evaluación continua</strong>
+      en un ciclo formativo de Andalucía? El límite legal es el <strong>80% de
+      asistencia</strong> de la duración total de <strong>cada módulo</strong> —
+      no del curso entero.
+    </p>
+  </header>
+
+  <main>
+
+    <!-- ===================== 1. AJUSTES ===================== -->
+    <section class="bloque">
+      <div class="seccion-titulo">
+        <span class="num">01</span>
+        <h2>Ajustes generales</h2>
+      </div>
+
+      <div class="panel">
+        <div class="ajustes">
+          <div class="campo">
+            <label for="horasDia">Horas por jornada</label>
+            <input id="horasDia" type="number" min="1" max="10" step="0.5" value="6"
+                   inputmode="decimal">
+          </div>
+          <div class="campo">
+            <label for="diasSemana">Días lectivos por semana</label>
+            <input id="diasSemana" type="number" min="1" max="7" step="1" value="5"
+                   inputmode="numeric">
+          </div>
+          <div class="campo" style="flex:1 1 300px">
+            <label class="interruptor" for="justCuentan">
+              <input id="justCuentan" type="checkbox" checked>
+              <span class="txt">
+                <strong>Las faltas justificadas consumen presupuesto</strong>
+                <span>El art. 2.4 no las distingue. Si tu centro las descuenta,
+                  desactívalo aquí.</span>
+              </span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== 2. MODO ===================== -->
+    <section class="bloque">
+      <div class="seccion-titulo">
+        <span class="num">02</span>
+        <h2>Cómo quieres calcularlo</h2>
+      </div>
+
+      <div class="modos" id="modos" role="group" aria-label="Modo de cálculo"></div>
+    </section>
+
+    <!-- ===================== 3. MÓDULOS ===================== -->
+    <section class="bloque">
+      <div class="seccion-titulo">
+        <span class="num">03</span>
+        <h2>Módulos</h2>
+      </div>
+
+      <div class="panel">
+        <div class="encabezado">
+          <p class="tenue" style="margin:0;font-size:13.5px;max-width:52ch" id="pistaModulos">
+            Añade cada módulo con sus horas totales.
+          </p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button type="button" class="fantasma" id="btnEjemplo">Cargar ejemplo</button>
+            <button type="button" id="btnAnadir">+ Añadir módulo</button>
+          </div>
+        </div>
+
+        <div class="tabla-envoltorio">
+          <table class="modulos">
+            <thead>
+              <tr>
+                <th style="width:38%">Módulo</th>
+                <th class="num" style="width:14%">Horas totales</th>
+                <th class="num" style="width:12%">Just.</th>
+                <th class="num" style="width:12%">Injust.</th>
+                <th class="num" style="width:14%" data-col="transc">Transcurridas</th>
+                <th class="acciones"><span class="visualmente-oculto">Quitar</span></th>
+              </tr>
+            </thead>
+            <tbody id="cuerpoModulos"></tbody>
+          </table>
+          <div class="vacio" id="tablaVacia" hidden>
+            Todavía no hay módulos.<br>
+            Pulsa <strong>+ Añadir módulo</strong> o <strong>Cargar ejemplo</strong>.
+          </div>
+        </div>
+
+        <p class="nota" id="notaModulos"></p>
+      </div>
+    </section>
+
+    <!-- ===================== 4. RESULTADO ===================== -->
+    <section class="bloque">
+      <div class="seccion-titulo">
+        <span class="num">04</span>
+        <h2>Resultado</h2>
+      </div>
+      <div id="resultado"></div>
+    </section>
+
+    <!-- ===================== REFERENCIAS ===================== -->
+    <section class="referencias">
+      <div class="seccion-titulo">
+        <span class="num">§</span>
+        <h2>Base legal</h2>
+      </div>
+      <dl>
+        <div>
+          <dt>El umbral que se aplica</dt>
+          <dd>
+            <strong>Orden de 18 de septiembre de 2025</strong> (BOJA nº 180 C1),
+            <strong>artículo 2.4</strong>, que reproduce los artículos 27.5 y 27.6
+            del <strong>Decreto 147/2025</strong>, de 17 de septiembre:
+            <cite>«…la evaluación continua de los aprendizajes requerirá la asistencia
+            regular y obligatoria, tanto en el centro docente como en la fase de
+            formación en empresa u organismo equiparado, de al menos el 80 por ciento
+            de la duración total del módulo, ámbito o proyecto, a partir de la fecha en
+            la que el alumnado se haya matriculado.»</cite>
+          </dd>
+        </div>
+        <div>
+          <dt>Qué pasa si te pasas</dt>
+          <dd>
+            Pierdes el derecho a la <strong>evaluación continua</strong> de ese módulo,
+            no la convocatoria: el alumnado conserva el derecho a las pruebas objetivas
+            que determine el equipo docente (art. 2.5). La pérdida debe notificarse
+            formalmente, con el modelo del Anexo I, firmada por el/la tutor/a y el/la
+            director/a (art. 2.6).
+          </dd>
+        </div>
+        <div>
+          <dt>El límite más duro</dt>
+          <dd>
+            Aparte del 20%, el <strong>artículo 9.1</strong> permite al centro
+            <strong>anular de oficio la matrícula</strong> —con pérdida de plaza y de
+            convocatorias— a partir del 15 de noviembre si acumulas
+            <strong>45 días hábiles de inasistencia injustificada</strong> en el
+            conjunto de tus módulos.
+          </dd>
+        </div>
+        <div>
+          <dt>La fase de empresa cuenta</dt>
+          <dd>
+            El art. 2.4 cuenta la asistencia <em>«tanto en el centro docente como en
+            la fase de formación en empresa»</em>. Las horas de la fase de empresa
+            forman parte de la duración total del módulo y las faltas ahí también
+            consumen presupuesto.
+          </dd>
+        </div>
+        <div>
+          <dt>Justificadas: zona gris</dt>
+          <dd>
+            El art. 2.4 habla de «asistencia regular y obligatoria» sin mencionar
+            justificadas ni injustificadas; sólo el art. 9 dice explícitamente
+            «injustificada». En la práctica cada centro lo aplica según su proyecto
+            educativo, y el profesorado conserva margen de decisión ante cada caso
+            concreto. Por eso es un ajuste y no un valor fijo.
+          </dd>
+        </div>
+      </dl>
+    </section>
+  </main>
+
+  <footer class="pie">
+    <span>FaltasProMax · sin conexión, sin servidor, sin datos guardados</span>
+    <span>Cálculo sin persistencia: nada se guarda al cerrar</span>
+  </footer>
+</div>
+
+<script src="calculo.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var C = window.Calculo;
+
+  /* ---------------------------------------------------------------- *
+   * Estado (voluntariamente efímero: no se persiste nada)
+   * ---------------------------------------------------------------- */
+
+  var EJEMPLO = [
+    { nombre: 'Lenguaje y Práctica Musical', horasTotales: 96,  justificadas: 2, injustificadas: 6 },
+    { nombre: 'Historia de la Música',           horasTotales: 64,  justificadas: 0, injustificadas: 5 },
+    { nombre: 'Gestión de Proyectos Musicales',  horasTotales: 80,  justificadas: 1, injustificadas: 8 },
+    { nombre: 'Formación en empresa',            horasTotales: 560, justificadas: 10, injustificadas: 20 }
+  ];
+
+  var estado = {
+    modo: 'A',
+    horasPorDia: 6,
+    diasLectivosPorSemana: 5,
+    justificadasCuentan: true,
+    modulos: []
+  };
+
+  var $  = function (sel) { return document.querySelector(sel); };
+  var crear = function (tag, clase, texto) {
+    var el = document.createElement(tag);
+    if (clase) el.className = clase;
+    if (texto != null) el.textContent = texto;
+    return el;
+  };
+  /**
+   * Formatea un número al estilo español (coma decimal) respetando la
+   * precisión máxima pero SIN ceros decimales de relleno: 4 con 2 decimales
+   * debe salir "4", no "4,00"; 24,0 con 1 decimal debe salir "24".
+   */
+  var num = function (v, dec) {
+    var n = Number(v);
+    if (!isFinite(n)) n = 0;
+    var d = dec == null ? 0 : dec;
+    return n.toLocaleString('es-ES', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: d
+    });
+  };
+  var leerNum = function (v) {
+    var n = Number(v);
+    return isFinite(n) && n >= 0 ? n : 0;
+  };
+  var opciones = function () {
+    return {
+      justificadasCuentan: estado.justificadasCuentan,
+      horasPorDia: estado.horasPorDia,
+      diasLectivosPorSemana: estado.diasLectivosPorSemana
+    };
+  };
+  var vacio = function () { return estado.modulos.length === 0; };
+  var vacioSinHoras = function () {
+    return !vacio() && !estado.modulos.some(function (m) { return leerNum(m.horasTotales) > 0; });
+  };
+
+  /* ---------------------------------------------------------------- *
+   * Selector de modo
+   * ---------------------------------------------------------------- */
+
+  function pintarModos() {
+    var cont = $('#modos');
+    cont.textContent = '';
+    ['A', 'B', 'C'].forEach(function (id) {
+      var m = C.MODOS[id];
+      var b = crear('button', 'modo');
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(estado.modo === id));
+
+      var cab = crear('div', 'cab');
+      cab.appendChild(crear('span', 'letra', id));
+      cab.appendChild(crear('span', 'tit', m.titulo));
+      b.appendChild(cab);
+
+      b.appendChild(crear('div', 'res', m.resumen));
+      b.appendChild(crear('span', 'etiqueta legal-inline ' + (m.legal ? 'legal' : 'suave'), m.criterio));
+
+      b.addEventListener('click', function () {
+        if (estado.modo === id) return;
+        estado.modo = id;
+        pintarModos();
+        // El modo C necesita una columna extra ("transcurridas"), así que hay que
+        // repintar la tabla además del resultado.
+        pintarModulos();
+        pintarResultado();
+      });
+      cont.appendChild(b);
+    });
+  }
+
+  /* ---------------------------------------------------------------- *
+   * Tabla de módulos (sólo entradas; el resultado vive más abajo)
+   * ---------------------------------------------------------------- */
+
+  function crearCampo(tipo, clase, valor, alCambiar) {
+    var i = crear('input', 'entrada ' + clase);
+    i.type = tipo;
+    if (tipo === 'number') {
+      i.min = '0';
+      i.step = 'any';
+      i.inputMode = 'decimal';
+    }
+    i.value = valor == null ? '' : valor;
+    i.addEventListener('input', function () { alCambiar(i.value); pintarResultado(); });
+    return i;
+  }
+
+  function pintarModulos() {
+    var cuerpo = $('#cuerpoModulos');
+    cuerpo.textContent = '';
+
+    var colTransc = document.querySelector('[data-col="transc"]');
+    var esC = estado.modo === 'C';
+    colTransc.style.display = esC ? '' : 'none';
+
+    estado.modulos.forEach(function (m, i) {
+      var tr = crear('tr');
+
+      var tdNombre = crear('td');
+      tdNombre.appendChild(crearCampo('text', '', m.nombre || '', function (v) {
+        estado.modulos[i].nombre = v;
+      }));
+      tr.appendChild(tdNombre);
+
+      var tdHoras = crear('td', 'num');
+      tdHoras.appendChild(crearCampo('number', 'num', m.horasTotales == null ? '' : m.horasTotales, function (v) {
+        estado.modulos[i].horasTotales = leerNum(v);
+      }));
+      tr.appendChild(tdHoras);
+
+      var tdJust = crear('td', 'num');
+      tdJust.appendChild(crearCampo('number', 'num', m.justificadas == null ? '' : m.justificadas, function (v) {
+        estado.modulos[i].justificadas = leerNum(v);
+      }));
+      tr.appendChild(tdJust);
+
+      var tdInjust = crear('td', 'num');
+      tdInjust.appendChild(crearCampo('number', 'num', m.injustificadas == null ? '' : m.injustificadas, function (v) {
+        estado.modulos[i].injustificadas = leerNum(v);
+      }));
+      tr.appendChild(tdInjust);
+
+      var tdTransc = crear('td', 'num');
+      var inputTransc = crearCampo('number', 'num', m.horasTranscurridas == null ? '' : m.horasTranscurridas, function (v) {
+        estado.modulos[i].horasTranscurridas = leerNum(v);
+      });
+      tdTransc.appendChild(inputTransc);
+      tdTransc.style.display = esC ? '' : 'none';
+      tr.appendChild(tdTransc);
+
+      var tdAcc = crear('td', 'acciones');
+      var btn = crear('button', 'icono', '×');
+      btn.type = 'button';
+      btn.title = 'Quitar módulo';
+      btn.setAttribute('aria-label', 'Quitar módulo');
+      btn.addEventListener('click', function () {
+        estado.modulos.splice(i, 1);
+        pintarModulos();
+        pintarResultado();
+      });
+      tdAcc.appendChild(btn);
+      tr.appendChild(tdAcc);
+
+      cuerpo.appendChild(tr);
+    });
+
+    $('#tablaVacia').hidden = !vacio();
+    $('#btnAnadir').disabled = estado.modulos.length >= 40;
+
+    $('#pistaModulos').textContent = esC
+      ? 'Para proyectar necesitas también las horas ya transcurridas de cada módulo.'
+      : 'Añade cada módulo con sus horas totales.';
+
+    $('#notaModulos').textContent =
+      'Las horas totales del módulo incluyen la fase de formación en empresa cuando ' +
+      'forma parte de él: esas faltas también consumen presupuesto (art. 2.4). ' +
+      'Pulsa + Añadir módulo para meter más.';
+  }
+
+  /* ---------------------------------------------------------------- *
+   * Piezas de resultado reutilizables
+   * ---------------------------------------------------------------- */
+
+  function hero(eyebrow, cifra, unidad, leyenda, sello) {
+    var h = crear('div', 'hero');
+    h.appendChild(crear('span', 'eyebrow', eyebrow));
+
+    var c = crear('span', 'cifra');
+    c.appendChild(document.createTextNode(cifra));
+    if (unidad) {
+      var u = crear('span', 'ud', unidad);
+      c.appendChild(u);
+    }
+    h.appendChild(c);
+
+    if (leyenda) h.appendChild(crear('div', 'leyenda', leyenda));
+
+    if (sello && sello.length) {
+      var s = crear('div', 'sello');
+      sello.forEach(function (par) {
+        var d = crear('div');
+        d.appendChild(document.createTextNode(par.k + ' '));
+        var v = crear('span', par.v != null && par.destacado ? 'negativo' : '', par.v);
+        d.appendChild(v);
+        s.appendChild(d);
+      });
+      h.appendChild(s);
+    }
+    return h;
+  }
+
+  function rejilla(pares) {
+    var g = crear('div', 'rejilla');
+    pares.forEach(function (p) {
+      var d = crear('div');
+      d.appendChild(crear('span', 'k', p.k));
+      var v = crear('span', 'v');
+      v.appendChild(document.createTextNode(p.v));
+      if (p.ud) v.appendChild(crear('span', 'ud', p.ud));
+      d.appendChild(v);
+      if (p.nota) {
+        var n = crear('div', 'mono', p.nota);
+        n.style.cssText = 'font-size:11px;color:var(--gris);margin-top:3px';
+        d.appendChild(n);
+      }
+      g.appendChild(d);
+    });
+    return g;
+  }
+
+  function tarjetaModulo(ev, extra) {
+    var t = crear('div', 'tarjeta-modulo ' + (ev.riesgo === 'perdida' ? 'perdida' :
+                                               ev.riesgo === 'limite' ? 'limite' : ''));
+
+    var izq = crear('div');
+    var nom = crear('div', 'nombre');
+    nom.appendChild(document.createTextNode(ev.nombre));
+    if (ev.riesgo === 'perdida') {
+      nom.appendChild(crear('span', 'etiqueta aviso', 'Evaluación continua perdida'));
+    }
+    izq.appendChild(nom);
+
+    var meta = ev.horasTotales + ' h · presupuesto ' + num(ev.presupuestoHoras) + ' h' +
+               ' · mínimo ' + num(ev.asistenciaMinima) + ' h (' +
+               C.ASISTENCIA_MINIMA_PORCENTAJE + '% de asistencia)';
+    izq.appendChild(crear('div', 'meta', meta));
+    t.appendChild(izq);
+
+    var der = crear('div', 'cifras');
+    if (extra) {
+      der.appendChild(crear('div', 'resto', extra.cifra));
+      der.appendChild(crear('div', 'de', extra.leyenda));
+    } else if (ev.conservaEvaluacionContinua) {
+      der.appendChild(crear('div', 'resto', num(ev.soldeadasHoras)));
+      der.appendChild(crear('div', 'de', 'h te quedan'));
+    } else {
+      der.appendChild(crear('div', 'resto', '+' + num(ev.excedenteHoras)));
+      der.appendChild(crear('div', 'de', 'h de más'));
+    }
+    t.appendChild(der);
+
+    var b = crear('div', 'barra');
+    var rel = crear('div', 'relleno ' + (ev.riesgo === 'perdida' ? 'perdida' :
+                                         ev.riesgo === 'limite' ? 'aviso' : ''));
+    rel.style.width = Math.max(0, Math.min(100, ev.porcentajeConsumido)) + '%';
+    b.appendChild(rel);
+    t.appendChild(b);
+
+    return t;
+  }
+
+  function aviso(titulo, texto, neutro) {
+    var a = crear('div', 'aviso' + (neutro ? ' neutro' : ''));
+    a.appendChild(crear('strong', null, titulo));
+    a.appendChild(document.createTextNode(texto));
+    return a;
+  }
+
+  /* ---------------------------------------------------------------- *
+   * Modo A — por módulo (legal)
+   * ---------------------------------------------------------------- */
+
+  function resultadoA(curso) {
+    var frag = document.createDocumentFragment();
+    var critico = curso.moduloCritico;
+
+    if (!critico) {
+      frag.appendChild(aviso(
+        'Sin datos que calcular',
+        'Añade al menos un módulo con sus horas totales.',
+        true
+      ));
+      return frag;
+    }
+
+    var perdidos = curso.modulosPerdidos;
+
+    if (critico.conservaEvaluacionContinua) {
+      var d = C.desglosarHoras(critico.soldeadasHoras, opciones());
+      frag.appendChild(hero(
+        'Módulo con menos margen · ' + critico.nombre,
+        num(d.jornadasCompletas),
+        d.horasRestantes > 0 ? 'jornadas + ' + num(d.horasRestantes, 2) + ' h' : 'jornadas',
+        'Es el módulo que antes agota el presupuesto. Todos los módulos conservan ' +
+        'la evaluación continua, pero el margen se te acaba aquí primero.',
+        [
+          { k: 'Le quedan', v: num(critico.soldeadasHoras) + ' h' },
+          { k: ' equivalen a', v: num(d.semanasLectivas, 1) + ' semanas lectivas' },
+          { k: 'Módulos en riesgo', v: String(perdidos.length), destacado: perdidos.length > 0 }
+        ]
+      ));
+    } else {
+      frag.appendChild(hero(
+        'Ya has perdido la evaluación continua · ' + critico.nombre,
+        '+' + num(critico.excedenteHoras),
+        'h de más',
+        'Te has pasado en este módulo. El margen global del curso no te salva: el ' +
+        '20% se aplica a cada módulo por separado.',
+        [
+          { k: 'Presupuesto', v: num(critico.presupuestoHoras) + ' h' },
+          { k: 'inasistencias', v: num(critico.inasistenciasComputan) + ' h', destacado: true },
+          { k: 'Módulos perdidos', v: String(perdidos.length), destacado: perdidos.length > 0 }
+        ]
+      ));
+    }
+
+    frag.appendChild(aviso(
+      'El presupuesto es por módulo, no del curso',
+      'Cada módulo tiene su propia bolsa del 20% de sus horas. Acumulas ' +
+      'por separado: depender del total del ciclo sólo sirve para orientarse, ' +
+      'no como margen seguro.'
+    ));
+
+    frag.appendChild(rejilla([
+      { k: 'Horas del curso', v: num(curso.totalHoras), ud: 'h' },
+      { k: 'Suma de presupuestos', v: num(curso.presupuestoGlobalHoras), ud: 'h',
+        nota: 'orientativo, no legal' },
+      { k: 'Inasistencias que consumen', v: num(curso.inasistenciasComputadas), ud: 'h' }
+    ]));
+
+    var lista = crear('div', 'tarjetas');
+    lista.style.marginTop = '16px';
+    curso.modulos.filter(function (m) { return m.existe; }).forEach(function (m) {
+      lista.appendChild(tarjetaModulo(m));
+    });
+    frag.appendChild(lista);
+
+    return frag;
+  }
+
+  /* ---------------------------------------------------------------- *
+   * Modo B — global del curso (orientativo)
+   * ---------------------------------------------------------------- */
+
+  function resultadoB(curso) {
+    var frag = document.createDocumentFragment();
+
+    if (curso.totalHoras === 0) {
+      frag.appendChild(aviso('Sin datos que calcular',
+        'Añade al menos un módulo con sus horas totales.', true));
+      return frag;
+    }
+
+    var d = C.desglosarHoras(curso.presupuestoGlobalHoras, opciones());
+
+    frag.appendChild(hero(
+      'Presupuesto global del curso · orientativo',
+      num(d.jornadasCompletas),
+      d.horasRestantes > 0 ? 'jornadas + ' + num(d.horasRestantes, 2) + ' h' : 'jornadas',
+      'El 20% de todas las horas del curso sumadas. Útil para dimensionar de un ' +
+      'vistazo. No es un umbral legal y no te protege de nada.',
+      [
+        { k: 'Presupuesto', v: num(curso.presupuestoGlobalHoras) + ' h' },
+        { k: ' equivalen a', v: num(d.semanasLectivas, 1) + ' semanas lectivas' },
+        { k: 'Superado por', v: num(curso.excedenteGlobalHoras) + ' h', destacado: curso.excedenteGlobalHoras > 0 }
+      ]
+    ));
+
+    frag.appendChild(aviso(
+      'Esto no es el criterio legal',
+      'El artículo 2.4 de la Orden de 18 de septiembre de 2025 dice «la duración ' +
+      'total del módulo, ámbito o proyecto». No existe un umbral a nivel de curso. ' +
+      'Si necesitas el número que protege tu evaluación continua, usa el modo A.'
+    ));
+
+    frag.appendChild(rejilla([
+      { k: 'Horas del curso', v: num(curso.totalHoras), ud: 'h' },
+      { k: '20% del total', v: num(curso.presupuestoGlobalHoras), ud: 'h' },
+      { k: 'Inasistencias que consumen', v: num(curso.inasistenciasComputadas), ud: 'h' },
+      { k: 'Margen restante', v: num(curso.margenGlobalHoras), ud: 'h' }
+    ]));
+
+    if (curso.moduloCritico && curso.moduloCritico.conservaEvaluacionContinua) {
+      var crit = curso.moduloCritico;
+      frag.appendChild(aviso(
+        'Donde sí puede dolestar: ' + crit.nombre,
+        'Módulo con el margen más ajustado. Aquí es donde el cálculo legal del ' +
+        'modo A dice que te vas a quedar antes.',
+        true
+      ));
+    }
+
+    return frag;
+  }
+
+  /* ---------------------------------------------------------------- *
+   * Modo C — proyección sobre lo transcurrido
+   * ---------------------------------------------------------------- */
+
+  function resultadoC(curso) {
+    var frag = document.createDocumentFragment();
+
+    var conProyeccion = curso.modulos.filter(function (m) {
+      return m.existe && m.proyeccion;
+    });
+
+    if (conProyeccion.length === 0) {
+      frag.appendChild(aviso(
+        'Necesito las horas transcurridas',
+        'Rellena la columna «Transcurridas» de al menos un módulo para poder ' +
+        'proyectar. Si aún no ha empezado el curso, deja el campo en 0 y el resto ' +
+        'de la calculadora sigue funcionando.',
+        true
+      ));
+      if (curso.totalHoras > 0) {
+        frag.appendChild(rejilla([
+          { k: 'Horas del curso', v: num(curso.totalHoras), ud: 'h' },
+          { k: 'Módulos', v: String(curso.modulos.filter(function (m) { return m.existe; }).length) }
+        ]));
+      }
+      return frag;
+    }
+
+    var desbordados = conProyeccion.filter(function (m) {
+      return !m.proyeccion.dentroDePresupuesto;
+    });
+
+    if (desbordados.length === 0) {
+      var peor = conProyeccion.slice().sort(function (a, b) {
+        return b.porcentajeConsumido - a.porcentajeConsumido;
+      })[0];
+      frag.appendChild(hero(
+        'A este ritmo ningún módulo se desborda',
+        num(peor.proyeccion.presupuestoHoras - peor.proyeccion.consumidas),
+        'h de margen en el peor caso',
+        'Si mantienes el ritmo actual de faltas, ningún módulo pierde la evaluación ' +
+        'continua. El más ajustado es ' + peor.nombre + '.',
+        [
+          { k: 'Proyectadas al final', v: num(peor.proyeccion.proyeccionHoras, 1) + ' h' },
+          { k: 'Presupuesto', v: num(peor.proyeccion.presupuestoHoras) + ' h' },
+          { k: 'Módulos en riesgo', v: '0' }
+        ]
+      ));
+    } else {
+      var primero = desbordados[0];
+      frag.appendChild(hero(
+        'A este ritmo te pasas · ' + primero.nombre,
+        num(primero.proyeccion.proyeccionHoras),
+        'h proyectadas',
+        'Si no cambias nada, terminas el módulo por encima de su presupuesto de ' +
+        num(primero.proyeccion.presupuestoHoras) + ' h. Perderías la evaluación ' +
+        'continua en ese módulo.',
+        [
+          { k: 'Presupuesto', v: num(primero.proyeccion.presupuestoHoras) + ' h' },
+          { k: 'Ya llevas', v: num(primero.proyeccion.consumidas) + ' h' },
+          { k: 'Te pasarías por', v: num(-primero.proyeccion.margenReal, 1) + ' h', destacado: true }
+        ]
+      ));
+    }
+
+    frag.appendChild(aviso(
+      'Esto no es el criterio legal',
+      'La proyección extrapola tu ritmo actual sobre las horas ya dadas. El ' +
+      'cálculo legal usa la duración total del módulo, así que la realidad suele ' +
+      'ser más benévola que esta estimación. Sirve como alerta temprana, no como ' +
+      'veredicto.'
+    ));
+
+    var lista = crear('div', 'tarjetas');
+    lista.style.marginTop = '16px';
+    conProyeccion.forEach(function (m) {
+      var p = m.proyeccion;
+      lista.appendChild(tarjetaModulo(m, {
+        cifra: num(p.proyeccionHoras, 1) + ' h',
+        leyenda: 'proyectadas de ' + num(p.presupuestoHoras) + ' h · van ' +
+                 p.horasTranscurridas + '/' + m.horasTotales + ' h'
+      }));
+    });
+    frag.appendChild(lista);
+
+    return frag;
+  }
+
+  /* ---------------------------------------------------------------- *
+   * Orquestación
+   * ---------------------------------------------------------------- */
+
+  function pintarResultado() {
+    var cont = $('#resultado');
+    cont.textContent = '';
+
+    var curso = C.evaluarCurso(estado.modulos, opciones());
+
+    if (vacioSinHoras() || vacio()) {
+      cont.appendChild(aviso(
+        'Empieza por los módulos',
+        'Sin módulos no hay nada que calcular. Añade uno con sus horas totales ' +
+        'o pulsa «Cargar ejemplo» para ver cómo funciona.',
+        true
+      ));
+      return;
+    }
+
+    if (estado.modo === 'A') cont.appendChild(resultadoA(curso));
+    else if (estado.modo === 'B') cont.appendChild(resultadoB(curso));
+    else cont.appendChild(resultadoC(curso));
+
+    var dias = C.evaluarDiasHabiles(curso.modulos, opciones());
+    if (dias.diasHabiles > 0) {
+      var t = crear('div', 'panel');
+      t.style.marginTop = '16px';
+      var cab = crear('div', 'seccion-titulo');
+      cab.style.marginBottom = '12px';
+      cab.appendChild(crear('span', 'num', '!'));
+      cab.appendChild(crear('h2', null, 'Aviso adicional · anulación de oficio'));
+      t.appendChild(cab);
+
+      var p = crear('p');
+      p.style.margin = '0';
+      p.style.fontSize = '13.5px';
+      p.appendChild(document.createTextNode(
+        'Llevas aproximadamente ' + num(dias.diasHabiles) + ' días hábiles de ' +
+        'inasistencia injustificada. A partir de ' + dias.limite + ' el centro ' +
+        'puede anularte la matrícula de oficio (art. 9.1 de la Orden): ' +
+        'te quedarías sin plaza y sin convocatorias.'
+      ));
+      t.appendChild(p);
+
+      if (dias.enRiesgo) {
+        var w = aviso('Estás en el umbral de anulación de oficio',
+          'Ya has alcanzado los ' + dias.limite + ' días hábiles. Ponte en contacto ' +
+          'con la tutoría cuanto antes.', false);
+        w.style.marginTop = '12px';
+        t.appendChild(w);
+      }
+      cont.appendChild(t);
+    }
+  }
+
+  function pintar() { pintarModos(); pintarModulos(); pintarResultado(); }
+
+  /* ---------------------------------------------------------------- *
+   * Eventos
+   * ---------------------------------------------------------------- */
+
+  $('#horasDia').addEventListener('input', function (e) {
+    var v = Number(e.target.value);
+    estado.horasPorDia = v > 0 ? v : 6;
+    pintarResultado();
+  });
+  $('#diasSemana').addEventListener('input', function (e) {
+    var v = Number(e.target.value);
+    estado.diasLectivosPorSemana = v > 0 ? v : 5;
+    pintarResultado();
+  });
+  $('#justCuentan').addEventListener('change', function (e) {
+    estado.justificadasCuentan = e.target.checked;
+    pintarResultado();
+  });
+  $('#btnAnadir').addEventListener('click', function () {
+    if (estado.modulos.length >= 40) return;
+    estado.modulos.push({ nombre: '', horasTotales: '', justificadas: '', injustificadas: '' });
+    pintarModulos();
+    pintarResultado();
+    var filas = document.querySelectorAll('#cuerpoModulos tr');
+    var ult = filas[filas.length - 1];
+    if (ult) { var inp = ult.querySelector('input'); if (inp) inp.focus(); }
+  });
+  $('#btnEjemplo').addEventListener('click', function () {
+    estado.modulos = EJEMPLO.map(function (m) {
+      return {
+        nombre: m.nombre,
+        horasTotales: m.horasTotales,
+        justificadas: m.justificadas,
+        injustificadas: m.injustificadas,
+        horasTranscurridas: m.horasTranscurridas || ''
+      };
+    });
+    pintarModulos();
+    pintarResultado();
+  });
+
+  pintar();
+})();
+</script>
+</body>
+</html>
