@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FaltasProMax · Calculadora de faltas FP Andalucía</title>
 <meta name="description" content="Calculadora de faltas para Formación Profesional en Andalucía: el 80% de asistencia mínimo del artículo 2.4 de la Orden de 18 de septiembre de 2025.">
+<link rel="icon" href="Gif.gif" type="image/gif">
 <style>
 /* ==================================================================
    FaltasProMax — monocromo, alto contraste, sin dependencias.
@@ -24,7 +25,7 @@
   --mono: ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono", Menlo,
           Consolas, monospace;
 
-  --e1: 4px;  --e2: 8px;  --e3: 12px; --e4: 16px;
+  --e2: 8px;  --e3: 12px; --e4: 16px;
   --e5: 24px; --e6: 32px; --e7: 48px;
 }
 
@@ -85,12 +86,19 @@ h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -0.02em; }
   gap: var(--e3);
   margin-bottom: var(--e3);
 }
-.marca .glifo {
-  width: 34px; height: 34px;
-  border: 2px solid var(--tinta);
-  display: grid; place-items: center;
-  font-family: var(--mono);
-  font-size: 15px; font-weight: 700;
+.marca .marca-logo {
+  /* Ancho y alto FIJOS para que la cabecera no dé un salto mientras carga el
+     GIF. object-fit recorta sin deformar si el icono no fuera cuadrado. */
+  display: block;
+  width: 34px;
+  height: 34px;
+  flex: none;
+}
+.marca .marca-logo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 .cabecera h1 { font-size: 27px; }
 .cabecera .lema { margin: var(--e2) 0 0; color: var(--gris); font-size: 15px; max-width: 62ch; }
@@ -398,6 +406,22 @@ button.icono:hover { background: transparent; color: var(--tinta); }
 .rejilla .v { font-family: var(--mono); font-size: 19px; font-weight: 600; }
 .rejilla .v .ud { font-size: 0.62em; font-weight: 400; color: var(--gris); margin-left: 2px; }
 
+/* Las cifras se envuelven en un span propio para que el count-up tenga un
+   nodo que interpolar sin pisar el sufijo ni el prefijo. */
+.hero .cifra-num, .rejilla .v-num { font: inherit; }
+
+/* Sufijo pequeño dentro de la cifra de una tarjeta de módulo ("32 h"). */
+.tarjeta-modulo .cifras .resto .ud-mini {
+  font-size: 0.6em;
+  font-weight: 400;
+  color: var(--gris);
+  margin-left: 3px;
+}
+
+/* Signo "+" por CSS: el count-up reescribe el textContent del número y se lo
+   llevaría por delante si fuera parte del texto. */
+.tarjeta-modulo.perdida .cifras .resto.con-signo::before { content: "+"; }
+
 /* ---------- Barras por módulo ---------- */
 
 .tarjetas { display: grid; gap: var(--e2); }
@@ -485,6 +509,196 @@ button.icono:hover { background: transparent; color: var(--tinta); }
   display: flex; flex-wrap: wrap; gap: var(--e2) var(--e4); justify-content: space-between;
 }
 
+/* ---------- Ayudas "?" ---------- */
+
+/* El disparador va pegado a la etiqueta del campo. */
+.ayuda {
+  display: inline-grid;
+  place-items: center;
+  /* Por encima del globo (z-index 40): en móvil el globo se despliega a
+     pantalla completa sobre el bloque siguiente, y si se quedara debajo su
+     propio botón quedaría tapado e inclicable. */
+  position: relative;
+  z-index: 41;
+  width: 16px; height: 16px;
+  padding: 0;
+  border: 1px solid var(--gris);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--gris);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  flex: none;
+  cursor: help;
+  transition: background 100ms linear, color 100ms linear, border-color 100ms linear;
+}
+.ayuda:hover,
+.ayuda[aria-expanded="true"] { background: var(--tinta); border-color: var(--tinta); color: var(--papel); }
+.ayuda:focus-visible { outline: 2px solid var(--tinta); outline-offset: 2px; }
+
+/* Ancla del globo: el propio contenedor del campo o del titular de sección. */
+.campo, .seccion-titulo, .encabezado, .guardado { position: relative; }
+
+/* Guardar e importar. Va a lo ancho del panel para que el globo, que se ancla
+   a la izquierda, no se salga por la derecha en pantallas estrechas.
+   La clase se llama aviso-guardado y no aviso porque .aviso ya la usan las cajas
+   de avisos del panel de resultados. */
+.guardado { margin-top: var(--e2); }
+.nota-guardado { margin: 0; font-size: 13.5px; max-width: 74ch; }
+.nota-guardado code { font-family: var(--mono); font-size: 12.5px; }
+/* Se reserva la altura para que el texto no salte al aparecer el aviso. */
+.aviso-guardado { margin: var(--e2) 0 0; font-size: 13.5px; min-height: 1.4em; }
+.aviso-guardado.vacio { visibility: hidden; }
+.aviso-guardado.es-error { font-weight: 600; border-left: 3px solid var(--tinta); padding-left: var(--e2); }
+
+.globo {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 10px);
+  left: 0;
+  width: max-content;
+  max-width: min(34ch, calc(100vw - 3 * var(--e4)));
+  padding: 9px 11px;
+  background: var(--tinta);
+  color: var(--papel);
+  border: 1px solid var(--tinta);
+  font-size: 12.5px;
+  line-height: 1.5;
+  font-variant-numeric: normal;
+
+  /* Oculto por defecto. Se muestra por hover, por :focus-within (teclado) o
+     por la clase .abierto que conmuta el clic (lo único que hay en táctil). */
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 130ms linear, transform 130ms ease-out, visibility 0s linear 130ms;
+}
+
+.globo .globo-punta {
+  position: absolute;
+  bottom: 100%;
+  left: 9px;
+  width: 9px; height: 9px;
+  background: var(--tinta);
+  border-left: 1px solid var(--tinta);
+  border-top: 1px solid var(--tinta);
+  transform: translateY(5px) rotate(45deg);
+}
+
+.campo:hover > .globo,
+.campo:focus-within > .globo,
+.globo.abierto,
+.globo:hover {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition: opacity 130ms linear, transform 130ms ease-out, visibility 0s;
+}
+
+/* Escape puede cerrarlo todo, pero el botón conserva el foco y :focus-within
+   volvería a mostrarlo. Hace falta un estado "descartado" que anule el hover y
+   el foco hasta que el puntero o el foco salgan del campo. */
+.globo[data-descartada]:not(.abierto) {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 130ms linear, transform 130ms ease-out, visibility 0s linear 130ms;
+}
+
+/* Un globo a pantalla completa es más cómodo que uno estrecho en móvil. */
+@media (max-width: 760px) {
+  .globo { left: 0; right: 0; width: auto; max-width: none; }
+}
+
+/* Glosario de los tres modos: es más largo, así que admite más ancho. */
+.globo-modos { max-width: min(46ch, calc(100vw - 3 * var(--e4))); }
+.globo-modo + .globo-modo {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #3a3a3a;
+}
+.globo-cab {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin-bottom: 3px;
+}
+.globo-letra {
+  display: inline-grid;
+  place-items: center;
+  width: 17px; height: 17px;
+  border: 1px solid var(--papel);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  flex: none;
+}
+.globo-tit { font-weight: 600; font-size: 13px; }
+.globo-leyenda {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #a8a8a8;
+  border: 1px solid #4a4a4a;
+  padding: 2px 5px;
+}
+.globo-txt { color: #d4d4d4; }
+
+/* ---------- Animación ---------- */
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Las barras se deslizan al cambiar de ancho en vez de saltar. */
+  .barra .relleno {
+    transition: width 420ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  }
+
+  /* Entrada de las tarjetas de módulo, escalonada. El retardo lo fija el JS
+     con la variable --i, acotado para que muchos módulos no tarden una eternidad. */
+  @keyframes entrar {
+    from { opacity: 0; transform: translateY(7px); }
+    to   { opacity: 1; transform: none; }
+  }
+  .tarjetas .tarjeta-modulo {
+    animation: entrar 300ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+    animation-delay: calc(var(--i, 0) * 34ms);
+  }
+
+  @keyframes cifra-entra {
+    from { opacity: 0; transform: translateY(9px) scale(0.985); }
+    to   { opacity: 1; transform: none; }
+  }
+  .hero .cifra { animation: cifra-entra 360ms cubic-bezier(0.22, 0.61, 0.36, 1) both; }
+
+  /* El modo activo recibe una marca en el canto y un empujón al pasar por encima. */
+  .modo { transition: background 120ms linear, color 120ms linear, transform 140ms ease-out; }
+  .modo:hover:not([aria-pressed="true"]) { transform: translateY(-2px); }
+  .modo::before {
+    content: "";
+    position: absolute;
+    inset: -1px auto -1px -1px;
+    width: 4px;
+    background: var(--papel);
+    opacity: 0;
+    transition: opacity 120ms linear;
+  }
+  .modo[aria-pressed="true"]::before { opacity: 1; }
+  .modo { position: relative; }
+}
+
+/* Quien tenga "reducir movimiento" en el sistema no ve ninguna transición.
+   Lo declarado fuera del bloque anterior (ayudas, hover) también se anula. */
+@media (prefers-reduced-motion: reduce) {
+  .ayuda, .globo, .globo .globo-punta, .modo, .barra .relleno {
+    transition: none !important;
+    animation: none !important;
+  }
+  .globo { transform: none !important; }
+}
+
 /* ---------- Adaptación ---------- */
 
 @media (max-width: 760px) {
@@ -515,7 +729,17 @@ button.icono:hover { background: transparent; color: var(--tinta); }
   <!-- ===================== CABECERA ===================== -->
   <header class="cabecera">
     <div class="marca">
-      <div class="glifo" aria-hidden="true">%</div>
+      <picture class="marca-logo">
+        <!--
+          El logo es un GIF animado de 10 frames a 40 ms (un bucle de 400 ms).
+          Un GIF no se puede pausar desde CSS, así que se le ofrece una versión
+          estática a quien tenga "reducir movimiento" activado en el sistema.
+          Es además la única imagen de la página: por eso la auditoría de
+          contraste excluye <img> y no el CSS.
+        -->
+        <source srcset="Gif-poster.png" media="(prefers-reduced-motion: reduce)">
+        <img src="Gif.gif" width="400" height="400" alt="FaltasProMax" decoding="async">
+      </picture>
       <div>
         <h1>FaltasProMax</h1>
       </div>
@@ -539,17 +763,17 @@ button.icono:hover { background: transparent; color: var(--tinta); }
 
       <div class="panel">
         <div class="ajustes">
-          <div class="campo">
+          <div class="campo" id="campo-horasDia">
             <label for="horasDia">Horas por jornada</label>
             <input id="horasDia" type="number" min="1" max="10" step="0.5" value="6"
                    inputmode="decimal">
           </div>
-          <div class="campo">
+          <div class="campo" id="campo-diasSemana">
             <label for="diasSemana">Días lectivos por semana</label>
             <input id="diasSemana" type="number" min="1" max="7" step="1" value="5"
                    inputmode="numeric">
           </div>
-          <div class="campo" style="flex:1 1 300px">
+          <div class="campo" id="campo-justCuentan" style="flex:1 1 300px">
             <label class="interruptor" for="justCuentan">
               <input id="justCuentan" type="checkbox" checked>
               <span class="txt">
@@ -565,7 +789,7 @@ button.icono:hover { background: transparent; color: var(--tinta); }
 
     <!-- ===================== 2. MODO ===================== -->
     <section class="bloque">
-      <div class="seccion-titulo">
+      <div class="seccion-titulo" id="tituloModos">
         <span class="num">02</span>
         <h2>Cómo quieres calcularlo</h2>
       </div>
@@ -575,7 +799,7 @@ button.icono:hover { background: transparent; color: var(--tinta); }
 
     <!-- ===================== 3. MÓDULOS ===================== -->
     <section class="bloque">
-      <div class="seccion-titulo">
+      <div class="seccion-titulo" id="tituloColumnas">
         <span class="num">03</span>
         <h2>Módulos</h2>
       </div>
@@ -588,7 +812,18 @@ button.icono:hover { background: transparent; color: var(--tinta); }
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <button type="button" class="fantasma" id="btnEjemplo">Cargar ejemplo</button>
             <button type="button" id="btnAnadir">+ Añadir módulo</button>
+            <button type="button" class="fantasma" id="btnExportar">Exportar</button>
+            <button type="button" class="fantasma" id="btnImportar">Importar</button>
+            <input type="file" id="archivo" accept=".json,application/json" hidden>
           </div>
+        </div>
+
+        <div class="guardado" id="cajaGuardar">
+          <p class="tenue nota-guardado">Nada se guarda solo: si cierras la pestaña se
+            pierde. <strong>Exportar</strong> descarga un archivo <code>.json</code> en tu
+            ordenador y <strong>Importar</strong> lo vuelve a cargar. No se envía nada a
+            ninguna parte.</p>
+          <p class="aviso-guardado vacio" id="avisoGuardado" role="status"></p>
         </div>
 
         <div class="tabla-envoltorio">
@@ -694,6 +929,7 @@ button.icono:hover { background: transparent; color: var(--tinta); }
 </div>
 
 <script src="calculo.js"></script>
+<script src="guardado.js"></script>
 <script>
 (function () {
   'use strict';
@@ -755,6 +991,262 @@ button.icono:hover { background: transparent; color: var(--tinta); }
   var vacioSinHoras = function () {
     return !vacio() && !estado.modulos.some(function (m) { return leerNum(m.horasTotales) > 0; });
   };
+
+  /* ---------------------------------------------------------------- *
+   * Movimiento
+   * ---------------------------------------------------------------- */
+
+  var queryMovimiento = window.matchMedia
+    ? window.matchMedia('(prefers-reduced-motion: reduce)')
+    : null;
+  var sinMovimiento = function () { return !!(queryMovimiento && queryMovimiento.matches); };
+
+  /* requestAnimationFrame no está en todos los motores. Si falta, el count-up
+     no se ejecuta y se escribe el valor final directamente: la animación es un
+     extra, nunca un requisito para que la cifra sea correcta. */
+  var raf = typeof window.requestAnimationFrame === 'function'
+    ? window.requestAnimationFrame.bind(window)
+    : null;
+  var sinRaf = raf ? window.cancelAnimationFrame.bind(window) : function () {};
+
+  /* Último valor pintado por elemento, para animar desde él y no desde cero. */
+  var ULTIMO = new WeakMap();
+  var animando = new WeakMap();
+
+  /**
+   * Escribe un número animando desde el valor anterior al nuevo.
+   *
+   * Si el sistema pide menos movimiento, si el valor no ha cambiado o si el
+   * motor no tiene requestAnimationFrame, se escribe directamente: una
+   * animación que miente sobre el estado final de la app es peor que no animar.
+   */
+  function pintarNumero(el, valor, dec) {
+    var destino = Number(valor);
+    if (!isFinite(destino)) destino = 0;
+    var desde = ULTIMO.has(el) ? ULTIMO.get(el) : 0;
+    ULTIMO.set(el, destino);
+
+    var previa = animando.get(el);
+    if (previa) { sinRaf(previa); animando.delete(el); }
+
+    if (sinMovimiento() || !raf || desde === destino) {
+      el.textContent = num(destino, dec);
+      return;
+    }
+
+    var dur = 380, t0 = null;
+    function paso(t) {
+      if (t0 === null) t0 = t;
+      var p = Math.min(1, (t - t0) / dur);
+      var v = desde + (destino - desde) * (1 - Math.pow(1 - p, 3));
+      if (p >= 1) el.textContent = num(destino, dec);
+      else el.textContent = num(v, dec);
+      if (p < 1) animando.set(el, raf(paso));
+      else animando.delete(el);
+    }
+    animando.set(el, raf(paso));
+  }
+
+  /** Retardo escalonado, acotado para que muchos módulos no tarden una eternidad. */
+  function escalonar(el, i) {
+    if (sinMovimiento()) return;
+    el.style.setProperty('--i', String(Math.min(i, 9)));
+  }
+
+  /* ---------------------------------------------------------------- *
+   * Ayudas "?"
+   * ---------------------------------------------------------------- */
+
+  /* Texto de cada ayuda en un único sitio: ni se duplica ni se desincroniza. */
+  var AYUDAS = {
+    horasDia: {
+      etiqueta: 'Qué son las horas por jornada',
+      texto: 'Las horas lectivas que haces en un día normal, normalmente 6. ' +
+             'Sirve para traducir las horas de margen a días: con 19 horas ' +
+             'disponibles y jornadas de 6 h son 3 días enteros más 1 hora.'
+    },
+    diasSemana: {
+      etiqueta: 'Qué son los días lectivos por semana',
+      texto: 'Cuántos días vienes a clase a la semana. Con 6 h al día y 5 días ' +
+             'lectivos son 30 h semanales, es decir, cinco jornadas de clase.'
+    },
+    justCuentan: {
+      etiqueta: 'Faltas justificadas',
+      texto: 'El artículo 2.4 habla de «asistencia regular y obligatoria» y NO ' +
+             'distingue justificadas de injustificadas: sólo el artículo 9 dice ' +
+             '«injustificada». Por defecto las contamos, que es la lectura ' +
+             'literal y conservadora. Si en tu centro no descuentan las ' +
+             'justificadas, desactívalo.'
+    },
+    guardar: {
+      etiqueta: 'Guardar y recuperar tu ficha',
+      texto: 'Nada se guarda solo: EXPORTAR descarga un archivo .json en tu ' +
+             'ordenador e IMPORTAR lo recupera. Se guarda sólo lo que has ' +
+             'escrito, nunca los resultados: al importar se vuelven a calcular.'
+    },
+    columnas: {
+      etiqueta: 'Qué poner en cada columna',
+      texto: 'HORAS TOTALES: la duración completa del módulo, incluidas las ' +
+             'horas de la fase de formación en empresa si forma parte de él ' +
+             '(art. 2.4). Se mira en tu plan de formación. · ' +
+             'JUST.: faltas justificadas. · INJUST.: faltas sin justificar. · ' +
+             'TRANSCURRIDAS: las horas ya dadas del módulo. Sólo se usa en el ' +
+             'modo C, para proyectar. Mira el parte de tu centro.'
+    }
+  };
+
+  /** Al abrir una ayuda se cierra cualquier otra: dos globos a la vez confunde. */
+  function cerrarAyudasExcepto(id) {
+    document.querySelectorAll('.globo.abierto').forEach(function (g) {
+      if (g.id === 'globo-' + id) return;
+      g.classList.remove('abierto');
+      var b = document.getElementById('ayuda-' + g.id.replace(/^globo-/, ''));
+      if (b) b.setAttribute('aria-expanded', 'false');
+    });
+  }
+
+  /**
+   * Cierra un globo y lo marca como descartado.
+   *
+   * El botón conserva el foco tras el clic, y :focus-within volvería a mostrar
+   * el globo al instante, así que cerrar no basta: hace falta que el estado
+   * "descartado" anule también el hover y el foco. Se rearma cuando el puntero
+   * o el foco salen del campo, que es cuando el usuario ha terminado de leer.
+   */
+  function descartarGlobo(globo) {
+    globo.classList.remove('abierto');
+    globo.setAttribute('data-descartada', '');
+    var b = document.getElementById('ayuda-' + globo.id.replace(/^globo-/, ''));
+    if (b) b.setAttribute('aria-expanded', 'false');
+  }
+
+  /** Rearma un globo descartado cuando el puntero o el foco se van del campo. */
+  function rearmaAlSalir(ancla, globo) {
+    function rearma() { globo.removeAttribute('data-descartada'); }
+    ancla.addEventListener('mouseleave', rearma);
+    ancla.addEventListener('focusout', function (e) {
+      // Sólo si el foco sale del campo entero, no si pasa del "?" al input.
+      if (!ancla.contains(e.relatedTarget)) rearma();
+    });
+  }
+
+  /**
+   * Conecta el comportamiento de un disparador "?".
+   *
+   * Compartirlo entre todas las ayudas garantiza que el clic, aria-expanded y
+   * Escape se comporten igual en todas y que no se solvapen por separado.
+   */
+  function conectarAyuda(btn, globo, id) {
+    btn.setAttribute('aria-expanded', 'false');
+    btn.addEventListener('click', function () {
+      var abierto = globo.classList.toggle('abierto');
+      btn.setAttribute('aria-expanded', abierto ? 'true' : 'false');
+      if (abierto) globo.removeAttribute('data-descartada');
+      cerrarAyudasExcepto(id);
+    });
+    rearmaAlSalir(btn.parentNode, globo);
+    globo.addEventListener('click', function (e) {
+      // Sin esto, leer un texto que contiene un enlace sería imposible.
+      e.stopPropagation();
+    });
+  }
+
+  /* Tocar fuera de la ayuda la cierra. En táctil es imprescindible: no hay
+     hover que la cierre nunca, y el globo abierto tapa lo que hay debajo. */
+  document.addEventListener('click', function (e) {
+    document.querySelectorAll('.globo.abierto').forEach(function (g) {
+      if (g.contains(e.target)) return;
+      var b = document.getElementById('ayuda-' + g.id.replace(/^globo-/, ''));
+      if (b && b.contains(e.target)) return;
+      descartarGlobo(g);
+    });
+  });
+
+  /**
+   * Inserta un disparador "?" y su globo dentro de `ancla`.
+   *
+   * El globo se muestra con :hover y con :focus-within sin nada de JS; la
+   * clase .abierto es la que conmuta el clic, que es el único gesto que
+   * existe en táctil. aria-describedby hace que el lector de pantalla
+   * anuncie el texto al enfocar el botón.
+   */
+  function montarAyuda(ancla, id, def, antesDe) {
+    var globo = crear('span', 'globo');
+    globo.id = 'globo-' + id;
+    globo.setAttribute('role', 'tooltip');
+    globo.appendChild(crear('span', 'globo-punta'));
+    globo.appendChild(crear('span', null, def.texto));
+
+    var btn = crear('button', 'ayuda', '?');
+    btn.type = 'button';
+    btn.id = 'ayuda-' + id;
+    btn.setAttribute('aria-label', def.etiqueta + ': ayuda');
+    btn.setAttribute('aria-describedby', globo.id);
+
+    if (antesDe) ancla.insertBefore(btn, antesDe);
+    else ancla.appendChild(btn);
+    ancla.appendChild(globo);
+    conectarAyuda(btn, globo, id);
+    return btn;
+  }
+
+  /* Escape cierra todas las ayudas abiertas. NO se devuelve el foco al
+     botón: el botón sigue enfoc tras el clic y :focus-within reabriría el
+     globo. `descartarGlobo` se encarga de que se quede cerrado. */
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    var abiertas = document.querySelectorAll('.globo.abierto, .globo[data-descartada]');
+    if (!abiertas.length) return;
+    abiertas.forEach(descartarGlobo);
+  });
+
+  /**
+   * Los modos son <button> y no se puede anidar un <button> dentro de otro
+   * <button> sin invalidar el HTML y romper el teclado. Por eso el disparador
+   * vive en el titular de la sección y el globo contiene los tres modos.
+   */
+  function montarGloboModos(ancla) {
+    var globo = crear('span', 'globo globo-modos');
+    globo.id = 'globo-modos';
+    globo.setAttribute('role', 'tooltip');
+    globo.appendChild(crear('span', 'globo-punta'));
+
+    ['A', 'B', 'C'].forEach(function (id) {
+      var m = C.MODOS[id];
+      var fila = crear('div', 'globo-modo');
+      fila.id = 'detalle-modo-' + id;
+
+      var cab = crear('div', 'globo-cab');
+      cab.appendChild(crear('span', 'globo-letra', id));
+      cab.appendChild(crear('span', 'globo-tit', m.titulo));
+      cab.appendChild(crear('span', 'globo-leyenda', m.criterio));
+      fila.appendChild(cab);
+
+      fila.appendChild(crear('div', 'globo-txt', m.detalle));
+      globo.appendChild(fila);
+    });
+
+    var btn = crear('button', 'ayuda', '?');
+    btn.type = 'button';
+    btn.id = 'ayuda-modos';
+    btn.setAttribute('aria-label', 'Comparar los tres modos de cálculo: ayuda');
+    btn.setAttribute('aria-describedby', globo.id);
+
+    ancla.appendChild(btn);
+    ancla.appendChild(globo);
+    conectarAyuda(btn, globo, 'modos');
+  }
+
+  /** Monta todas las ayudas. Se llama una sola vez, al arrancar. */
+  function montarAyudas() {
+    montarGloboModos($('#tituloModos'));
+
+    montarAyuda($('#campo-horasDia'), 'horasDia', AYUDAS.horasDia);
+    montarAyuda($('#campo-diasSemana'), 'diasSemana', AYUDAS.diasSemana);
+    montarAyuda($('#campo-justCuentan'), 'justCuentan', AYUDAS.justCuentan);
+    montarAyuda($('#cajaGuardar'), 'guardar', AYUDAS.guardar);
+    montarAyuda($('#tituloColumnas'), 'columnas', AYUDAS.columnas);
+  }
 
   /* ---------------------------------------------------------------- *
    * Selector de modo
@@ -883,23 +1375,31 @@ button.icono:hover { background: transparent; color: var(--tinta); }
    * Piezas de resultado reutilizables
    * ---------------------------------------------------------------- */
 
-  function hero(eyebrow, cifra, unidad, leyenda, sello) {
+  /**
+   * Tarjeta negra protagonista. Recibe el VALOR EN CRUDO y lo formatea aquí, para
+   * que el count-up pueda interpolar; si recibiera texto ya formateado no
+   * habría nada que animar.
+   *
+   * op: { dec, prefijo, unidad, leyenda, sello }
+   */
+  function hero(eyebrow, valor, op) {
+    op = op || {};
     var h = crear('div', 'hero');
     h.appendChild(crear('span', 'eyebrow', eyebrow));
 
     var c = crear('span', 'cifra');
-    c.appendChild(document.createTextNode(cifra));
-    if (unidad) {
-      var u = crear('span', 'ud', unidad);
-      c.appendChild(u);
-    }
+    if (op.prefijo) c.appendChild(crear('span', 'cifra-pre', op.prefijo));
+    var n = crear('span', 'cifra-num');
+    c.appendChild(n);
+    pintarNumero(n, valor, op.dec);
+    if (op.unidad) c.appendChild(crear('span', 'ud', op.unidad));
     h.appendChild(c);
 
-    if (leyenda) h.appendChild(crear('div', 'leyenda', leyenda));
+    if (op.leyenda) h.appendChild(crear('div', 'leyenda', op.leyenda));
 
-    if (sello && sello.length) {
+    if (op.sello && op.sello.length) {
       var s = crear('div', 'sello');
-      sello.forEach(function (par) {
+      op.sello.forEach(function (par) {
         var d = crear('div');
         d.appendChild(document.createTextNode(par.k + ' '));
         var v = crear('span', par.v != null && par.destacado ? 'negativo' : '', par.v);
@@ -917,22 +1417,25 @@ button.icono:hover { background: transparent; color: var(--tinta); }
       var d = crear('div');
       d.appendChild(crear('span', 'k', p.k));
       var v = crear('span', 'v');
-      v.appendChild(document.createTextNode(p.v));
+      var n = crear('span', 'v-num');
+      v.appendChild(n);
+      pintarNumero(n, p.v, p.dec);
       if (p.ud) v.appendChild(crear('span', 'ud', p.ud));
       d.appendChild(v);
       if (p.nota) {
-        var n = crear('div', 'mono', p.nota);
-        n.style.cssText = 'font-size:11px;color:var(--gris);margin-top:3px';
-        d.appendChild(n);
+        var nota = crear('div', 'mono', p.nota);
+        nota.style.cssText = 'font-size:11px;color:var(--gris);margin-top:3px';
+        d.appendChild(nota);
       }
       g.appendChild(d);
     });
     return g;
   }
 
-  function tarjetaModulo(ev, extra) {
+  function tarjetaModulo(ev, extra, i) {
     var t = crear('div', 'tarjeta-modulo ' + (ev.riesgo === 'perdida' ? 'perdida' :
                                                ev.riesgo === 'limite' ? 'limite' : ''));
+    escalonar(t, i || 0);
 
     var izq = crear('div');
     var nom = crear('div', 'nombre');
@@ -949,14 +1452,24 @@ button.icono:hover { background: transparent; color: var(--tinta); }
     t.appendChild(izq);
 
     var der = crear('div', 'cifras');
+    var resto = crear('div', 'resto');
+    var rn = crear('span');
+    resto.appendChild(rn);
+
     if (extra) {
-      der.appendChild(crear('div', 'resto', extra.cifra));
+      pintarNumero(rn, extra.valor, extra.dec);
+      resto.appendChild(crear('span', 'ud-mini', extra.sufijo || ''));
+      der.appendChild(resto);
       der.appendChild(crear('div', 'de', extra.leyenda));
     } else if (ev.conservaEvaluacionContinua) {
-      der.appendChild(crear('div', 'resto', num(ev.soldeadasHoras)));
+      pintarNumero(rn, ev.soldeadasHoras);
+      der.appendChild(resto);
       der.appendChild(crear('div', 'de', 'h te quedan'));
     } else {
-      der.appendChild(crear('div', 'resto', '+' + num(ev.excedenteHoras)));
+      // El signo "+" va por CSS para que el count-up no lo sobrescriba.
+      resto.classList.add('con-signo');
+      pintarNumero(rn, ev.excedenteHoras);
+      der.appendChild(resto);
       der.appendChild(crear('div', 'de', 'h de más'));
     }
     t.appendChild(der);
@@ -1001,28 +1514,36 @@ button.icono:hover { background: transparent; color: var(--tinta); }
       var d = C.desglosarHoras(critico.soldeadasHoras, opciones());
       frag.appendChild(hero(
         'Módulo con menos margen · ' + critico.nombre,
-        num(d.jornadasCompletas),
-        d.horasRestantes > 0 ? 'jornadas + ' + num(d.horasRestantes, 2) + ' h' : 'jornadas',
-        'Es el módulo que antes agota el presupuesto. Todos los módulos conservan ' +
-        'la evaluación continua, pero el margen se te acaba aquí primero.',
-        [
-          { k: 'Le quedan', v: num(critico.soldeadasHoras) + ' h' },
-          { k: ' equivalen a', v: num(d.semanasLectivas, 1) + ' semanas lectivas' },
-          { k: 'Módulos en riesgo', v: String(perdidos.length), destacado: perdidos.length > 0 }
-        ]
+        d.jornadasCompletas,
+        {
+          unidad: d.horasRestantes > 0
+            ? 'jornadas + ' + num(d.horasRestantes, 2) + ' h'
+            : 'jornadas',
+          leyenda: 'Es el módulo que antes agota el presupuesto. Todos los módulos ' +
+                   'conservan la evaluación continua, pero el margen se te acaba ' +
+                   'aquí primero.',
+          sello: [
+            { k: 'Le quedan', v: num(critico.soldeadasHoras) + ' h' },
+            { k: ' equivalen a', v: num(d.semanasLectivas, 1) + ' semanas lectivas' },
+            { k: 'Módulos en riesgo', v: String(perdidos.length), destacado: perdidos.length > 0 }
+          ]
+        }
       ));
     } else {
       frag.appendChild(hero(
         'Ya has perdido la evaluación continua · ' + critico.nombre,
-        '+' + num(critico.excedenteHoras),
-        'h de más',
-        'Te has pasado en este módulo. El margen global del curso no te salva: el ' +
-        '20% se aplica a cada módulo por separado.',
-        [
-          { k: 'Presupuesto', v: num(critico.presupuestoHoras) + ' h' },
-          { k: 'inasistencias', v: num(critico.inasistenciasComputan) + ' h', destacado: true },
-          { k: 'Módulos perdidos', v: String(perdidos.length), destacado: perdidos.length > 0 }
-        ]
+        critico.excedenteHoras,
+        {
+          prefijo: '+',
+          unidad: 'h de más',
+          leyenda: 'Te has pasado en este módulo. El margen global del curso no te ' +
+                   'salva: el 20% se aplica a cada módulo por separado.',
+          sello: [
+            { k: 'Presupuesto', v: num(critico.presupuestoHoras) + ' h' },
+            { k: 'inasistencias', v: num(critico.inasistenciasComputan) + ' h', destacado: true },
+            { k: 'Módulos perdidos', v: String(perdidos.length), destacado: perdidos.length > 0 }
+          ]
+        }
       ));
     }
 
@@ -1034,16 +1555,16 @@ button.icono:hover { background: transparent; color: var(--tinta); }
     ));
 
     frag.appendChild(rejilla([
-      { k: 'Horas del curso', v: num(curso.totalHoras), ud: 'h' },
-      { k: 'Suma de presupuestos', v: num(curso.presupuestoGlobalHoras), ud: 'h',
+      { k: 'Horas del curso', v: curso.totalHoras, ud: 'h' },
+      { k: 'Suma de presupuestos', v: curso.presupuestoGlobalHoras, ud: 'h',
         nota: 'orientativo, no legal' },
-      { k: 'Inasistencias que consumen', v: num(curso.inasistenciasComputadas), ud: 'h' }
+      { k: 'Inasistencias que consumen', v: curso.inasistenciasComputadas, ud: 'h' }
     ]));
 
     var lista = crear('div', 'tarjetas');
     lista.style.marginTop = '16px';
-    curso.modulos.filter(function (m) { return m.existe; }).forEach(function (m) {
-      lista.appendChild(tarjetaModulo(m));
+    curso.modulos.filter(function (m) { return m.existe; }).forEach(function (m, i) {
+      lista.appendChild(tarjetaModulo(m, null, i));
     });
     frag.appendChild(lista);
 
@@ -1067,15 +1588,21 @@ button.icono:hover { background: transparent; color: var(--tinta); }
 
     frag.appendChild(hero(
       'Presupuesto global del curso · orientativo',
-      num(d.jornadasCompletas),
-      d.horasRestantes > 0 ? 'jornadas + ' + num(d.horasRestantes, 2) + ' h' : 'jornadas',
-      'El 20% de todas las horas del curso sumadas. Útil para dimensionar de un ' +
-      'vistazo. No es un umbral legal y no te protege de nada.',
-      [
-        { k: 'Presupuesto', v: num(curso.presupuestoGlobalHoras) + ' h' },
-        { k: ' equivalen a', v: num(d.semanasLectivas, 1) + ' semanas lectivas' },
-        { k: 'Superado por', v: num(curso.excedenteGlobalHoras) + ' h', destacado: curso.excedenteGlobalHoras > 0 }
-      ]
+      d.jornadasCompletas,
+      {
+        unidad: d.horasRestantes > 0
+          ? 'jornadas + ' + num(d.horasRestantes, 2) + ' h'
+          : 'jornadas',
+        leyenda: 'El 20% de todas las horas del curso sumadas. Útil para ' +
+                 'dimensionar de un vistazo. No es un umbral legal y no te protege ' +
+                 'de nada.',
+        sello: [
+          { k: 'Presupuesto', v: num(curso.presupuestoGlobalHoras) + ' h' },
+          { k: ' equivalen a', v: num(d.semanasLectivas, 1) + ' semanas lectivas' },
+          { k: 'Superado por', v: num(curso.excedenteGlobalHoras) + ' h',
+            destacado: curso.excedenteGlobalHoras > 0 }
+        ]
+      }
     ));
 
     frag.appendChild(aviso(
@@ -1086,10 +1613,10 @@ button.icono:hover { background: transparent; color: var(--tinta); }
     ));
 
     frag.appendChild(rejilla([
-      { k: 'Horas del curso', v: num(curso.totalHoras), ud: 'h' },
-      { k: '20% del total', v: num(curso.presupuestoGlobalHoras), ud: 'h' },
-      { k: 'Inasistencias que consumen', v: num(curso.inasistenciasComputadas), ud: 'h' },
-      { k: 'Margen restante', v: num(curso.margenGlobalHoras), ud: 'h' }
+      { k: 'Horas del curso', v: curso.totalHoras, ud: 'h' },
+      { k: '20% del total', v: curso.presupuestoGlobalHoras, ud: 'h' },
+      { k: 'Inasistencias que consumen', v: curso.inasistenciasComputadas, ud: 'h' },
+      { k: 'Margen restante', v: curso.margenGlobalHoras, ud: 'h' }
     ]));
 
     if (curso.moduloCritico && curso.moduloCritico.conservaEvaluacionContinua) {
@@ -1126,8 +1653,8 @@ button.icono:hover { background: transparent; color: var(--tinta); }
       ));
       if (curso.totalHoras > 0) {
         frag.appendChild(rejilla([
-          { k: 'Horas del curso', v: num(curso.totalHoras), ud: 'h' },
-          { k: 'Módulos', v: String(curso.modulos.filter(function (m) { return m.existe; }).length) }
+          { k: 'Horas del curso', v: curso.totalHoras, ud: 'h' },
+          { k: 'Módulos', v: curso.modulos.filter(function (m) { return m.existe; }).length }
         ]));
       }
       return frag;
@@ -1143,30 +1670,36 @@ button.icono:hover { background: transparent; color: var(--tinta); }
       })[0];
       frag.appendChild(hero(
         'A este ritmo ningún módulo se desborda',
-        num(peor.proyeccion.presupuestoHoras - peor.proyeccion.consumidas),
-        'h de margen en el peor caso',
-        'Si mantienes el ritmo actual de faltas, ningún módulo pierde la evaluación ' +
-        'continua. El más ajustado es ' + peor.nombre + '.',
-        [
-          { k: 'Proyectadas al final', v: num(peor.proyeccion.proyeccionHoras, 1) + ' h' },
-          { k: 'Presupuesto', v: num(peor.proyeccion.presupuestoHoras) + ' h' },
-          { k: 'Módulos en riesgo', v: '0' }
-        ]
+        peor.proyeccion.presupuestoHoras - peor.proyeccion.consumidas,
+        {
+          unidad: 'h de margen en el peor caso',
+          leyenda: 'Si mantienes el ritmo actual de faltas, ningún módulo pierde la ' +
+                   'evaluación continua. El más ajustado es ' + peor.nombre + '.',
+          sello: [
+            { k: 'Proyectadas al final', v: num(peor.proyeccion.proyeccionHoras, 1) + ' h' },
+            { k: 'Presupuesto', v: num(peor.proyeccion.presupuestoHoras) + ' h' },
+            { k: 'Módulos en riesgo', v: '0' }
+          ]
+        }
       ));
     } else {
       var primero = desbordados[0];
       frag.appendChild(hero(
         'A este ritmo te pasas · ' + primero.nombre,
-        num(primero.proyeccion.proyeccionHoras),
-        'h proyectadas',
-        'Si no cambias nada, terminas el módulo por encima de su presupuesto de ' +
-        num(primero.proyeccion.presupuestoHoras) + ' h. Perderías la evaluación ' +
-        'continua en ese módulo.',
-        [
-          { k: 'Presupuesto', v: num(primero.proyeccion.presupuestoHoras) + ' h' },
-          { k: 'Ya llevas', v: num(primero.proyeccion.consumidas) + ' h' },
-          { k: 'Te pasarías por', v: num(-primero.proyeccion.margenReal, 1) + ' h', destacado: true }
-        ]
+        primero.proyeccion.proyeccionHoras,
+        {
+          dec: 1,
+          unidad: 'h proyectadas',
+          leyenda: 'Si no cambias nada, terminas el módulo por encima de su ' +
+                   'presupuesto de ' + num(primero.proyeccion.presupuestoHoras) +
+                   ' h. Perderías la evaluación continua en ese módulo.',
+          sello: [
+            { k: 'Presupuesto', v: num(primero.proyeccion.presupuestoHoras) + ' h' },
+            { k: 'Ya llevas', v: num(primero.proyeccion.consumidas) + ' h' },
+            { k: 'Te pasarías por', v: num(-primero.proyeccion.margenReal, 1) + ' h',
+              destacado: true }
+          ]
+        }
       ));
     }
 
@@ -1180,13 +1713,15 @@ button.icono:hover { background: transparent; color: var(--tinta); }
 
     var lista = crear('div', 'tarjetas');
     lista.style.marginTop = '16px';
-    conProyeccion.forEach(function (m) {
+    conProyeccion.forEach(function (m, i) {
       var p = m.proyeccion;
       lista.appendChild(tarjetaModulo(m, {
-        cifra: num(p.proyeccionHoras, 1) + ' h',
+        valor: p.proyeccionHoras,
+        dec: 1,
+        sufijo: ' h',
         leyenda: 'proyectadas de ' + num(p.presupuestoHoras) + ' h · van ' +
                  p.horasTranscurridas + '/' + m.horasTotales + ' h'
-      }));
+      }, i));
     });
     frag.appendChild(lista);
 
@@ -1249,11 +1784,140 @@ button.icono:hover { background: transparent; color: var(--tinta); }
     }
   }
 
-  function pintar() { pintarModos(); pintarModulos(); pintarResultado(); }
+  function pintar() { montarAyudas(); pintarModos(); pintarModulos(); pintarResultado(); }
+
+  /* ---------------------------------------------------------------- *
+ * Guardar e importar la ficha
+ *
+ * La lógica de leer y validar el archivo vive en guardado.js, sin DOM,
+ * y ya está probada. Aquí sólo se maneja el papel: descargar, leer el
+ * fichero elegido y llevar el estado a los campos.
+ * ---------------------------------------------------------------- */
+
+  /** Escribe el aviso de la sección. Sin texto, se oculta y no ocupa sitio.
+      Se llama avisar y no aviso porque arriba ya hay una función aviso() que
+      pinta las cajas del panel de resultados: si se llamara igual, al
+      redefinirla se rompería el resultado entero. */
+  var avisar = function (texto, esError) {
+    var p = $('#avisoGuardado');
+    p.textContent = texto || '';
+    p.classList.toggle('vacio', !texto);
+    p.classList.toggle('es-error', !!esError);
+  };
+
+  function exportar() {
+    var texto = Guardado.aTexto(estado);
+
+    // Sin esto la página no podría descargar nada y el clic fallaría en
+    // silencio. Se avisa en vez de romperse.
+    if (typeof URL === 'undefined' || !URL.createObjectURL) {
+      avisar('Este navegador no puede descargar el archivo. Prueba a copiar el ' +
+             'contenido a mano.', true);
+      return;
+    }
+
+    var nombre = 'faltas-' + new Date().toISOString().slice(0, 10) + '.json';
+    var url = URL.createObjectURL(new Blob([texto], { type: 'application/json' }));
+    var enlace = crear('a');
+    enlace.href = url;
+    enlace.download = nombre;
+    document.body.appendChild(enlace);
+    enlace.click();
+    document.body.removeChild(enlace);
+    // Se suelta en el siguiente turno: si se suelta ya, cancela la descarga.
+    setTimeout(function () { URL.revokeObjectURL(url); }, 0);
+
+    avisar('Guardado en «' + nombre + '», en la carpeta de descargas.');
+  }
+
+  /**
+   * Lleva un estado válido a la pantalla. Los campos del formulario son la
+   * otra mitad del estado: si no se escriben también, el siguiente ajuste que
+   * toque el usuario los pisaría con los valores por defecto.
+   */
+  function aplicarEstado(nuevo) {
+    estado.modo = nuevo.modo;
+    estado.horasPorDia = nuevo.horasPorDia;
+    estado.diasLectivosPorSemana = nuevo.diasLectivosPorSemana;
+    estado.justificadasCuentan = nuevo.justificadasCuentan;
+    estado.modulos = nuevo.modulos;
+
+    // Sin pasar por num(): un <input type="number"> necesita punto decimal, y
+    // num() devuelve coma, que el navegador rechazaría como valor no válido.
+    $('#horasDia').value = String(nuevo.horasPorDia);
+    $('#diasSemana').value = String(nuevo.diasLectivosPorSemana);
+    $('#justCuentan').checked = nuevo.justificadasCuentan;
+
+    pintarModos();
+    pintarModulos();
+    pintarResultado();
+  }
+
+  function importarArchivo(archivo) {
+    if (!archivo) return;
+    var lector = new FileReader();
+
+    lector.onload = function () {
+      var r = Guardado.desdeTexto(String(lector.result));
+      if (!r.ok) {
+        avisar('No se ha importado nada. ' + r.error, true);
+        return;
+      }
+
+      var antes = estado.modulos.length;
+      var despues = r.estado.modulos.length;
+      if (antes > 0 && !window.confirm(
+        'Se van a sustituir ' + antes + ' ' + (antes === 1 ? 'módulo' : 'módulos') +
+        ' por ' + despues + ' ' + (despues === 1 ? 'módulo' : 'módulos') +
+        ' del archivo. ¿Seguir adelante?'
+      )) {
+        avisar('No se ha importado nada: se conserva lo que había.');
+        return;
+      }
+
+      aplicarEstado(r.estado);
+      avisar('Importados ' + despues + ' ' + (despues === 1 ? 'módulo' : 'módulos') +
+             ' desde «' + archivo.name + '».');
+    };
+
+    lector.onerror = function () {
+      avisar('No se ha podido leer el archivo.', true);
+    };
+
+    lector.readAsText(archivo);
+  }
 
   /* ---------------------------------------------------------------- *
    * Eventos
    * ---------------------------------------------------------------- */
+
+  $('#btnExportar').addEventListener('click', function () {
+    // Si guardad.js no estuviera al lado, el clic no haría nada y el usuario
+    // creería que el botón está roto. Se dice qué pasa.
+    if (typeof Guardado === 'undefined') {
+      avisar('Falta el archivo guardado.js en esta carpeta: no se puede exportar.',
+             true);
+      return;
+    }
+    exportar();
+  });
+
+  $('#btnImportar').addEventListener('click', function () {
+    if (typeof Guardado === 'undefined') {
+      avisar('Falta el archivo guardado.js en esta carpeta: no se puede importar.',
+             true);
+      return;
+    }
+    $('#archivo').click();
+  });
+
+  $('#archivo').addEventListener('change', function (e) {
+    var entrada = e.target;
+    importarArchivo(entrada.files && entrada.files[0]);
+    // Vaciar el valor permite volver a elegir el mismo archivo después de un
+    // error: si no, el navegador no dispara otro 'change' y no se ve qué pasa.
+    try { entrada.value = ''; } catch (e2) { /* algunos navegadores no lo permiten */ }
+  });
 
   $('#horasDia').addEventListener('input', function (e) {
     var v = Number(e.target.value);

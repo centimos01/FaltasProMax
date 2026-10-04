@@ -1,6 +1,7 @@
 /*
  * Tests de la lógica de cálculo de FaltasProMax.
- * Ejecutar con:  node --test test/
+ * Ejecutar con:  node --test
+ * Sin argumentos: `node --test test/` falla en Windows.
  */
 'use strict';
 

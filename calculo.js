@@ -314,7 +314,9 @@
   }
 
   /* ------------------------------------------------------------------ *
-   * API pública
+   * API pública. Todo lo que se exporta está usado por index.html o por
+   * test/calculo.test.js: si sobra algo, se borra de aquí en vez de dejar
+   * una puerta que nadie abre.
    * ------------------------------------------------------------------ */
 
   return {
@@ -324,7 +326,6 @@
     MODOS: MODOS,
     presupuestoHoras: presupuestoHoras,
     asistenciaMinimaHoras: asistenciaMinimaHoras,
-    inasistenciasQueCuentan: inasistenciasQueCuentan,
     desglosarHoras: desglosarHoras,
     evaluarModulo: evaluarModulo,
     proyectar: proyectar,
